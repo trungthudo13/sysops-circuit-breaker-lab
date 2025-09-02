@@ -55,9 +55,55 @@ Via Nginx (host):
 - On first start, the container runs `migrate` and `collectstatic` automatically (see `docker/entrypoint.sh`).
 - Environment variables that link service calls are set in compose (e.g., `FRONTIER_DOMAIN`, `MIDLINE_DOMAIN`, `BACKLINE_DOMAIN`).
 
+## Istio Circuit Breaker (Kind)
+- Goal: Run the same services on a local Kind cluster with Istio and apply network‑level circuit breaking to `backline` using `DestinationRule` and `VirtualService`.
+
+Prerequisites
+- `docker`, `kind`, `kubectl`, `istioctl` available in PATH.
+
+Build image and initialize cluster
+1) Build the Docker image locally:
+```
+./dockerc.sh
+```
+2) Create Kind cluster, install Istio, deploy manifests, and apply CB policies:
+```
+./k8sinitialrc.sh
+```
+
+Expose Istio Ingress (Kind)
+- Port‑forward the Istio ingressgateway to host port 8002:
+```
+kubectl -n istio-system port-forward svc/istio-ingressgateway 8002:80
+```
+- Access Frontier via Istio at: `http://localhost:8002/`
+
+Apply updates after code changes
+- Re‑apply manifests and reload the image into Kind:
+```
+./k8sreloadrc.sh
+```
+
+Istio CB config in this repo
+- `docker/k8s/circuit-breaker.yaml` defines:
+  - `DestinationRule` for `backline` with connection pool limits and outlier detection.
+  - `VirtualService` for `backline` with `timeout` and `retries`.
+- Traffic flow: `frontier -> (midline) -> backline` via cluster DNS. The CB applies to calls targeting `backline.circuit-breaker.svc.cluster.local`.
+
+Load testing
+- Use the provided script to send requests and observe HTTP codes/latency:
+  - For Docker Compose (Nginx, port 8001), default in `curlspam.sh` is already set.
+  - For Istio/Kind (port 8002), edit `curlspam.sh` to use:
+    - `URL="http://localhost:8002/api/timeout-request?non_circuit_breaker=true"`
+```
+./curlspam.sh
+```
+- You can also run one‑offs:
+```
+curl -i http://localhost:8002/api/timeout-request
+curl -i "http://localhost:8002/api/timeout-request?non_circuit_breaker=true"
+```
+
 ## Local Development (optional)
 - Requires Python 3.13 if running outside Docker.
 - Install dependencies from `src/requirements.txt` and run `python src/manage.py runserver`, or start Daphne manually.
-
----
-Contact: If you want to extend the test scenarios (add routes, error/timeout ratios) or integrate metrics/exporters, I can add detailed guidance.
