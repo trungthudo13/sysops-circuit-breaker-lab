@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: circuit-breaker-gateway
+  namespace: circuit-breaker
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: frontier-vs
+  namespace: circuit-breaker
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - circuit-breaker-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: frontier.circuit-breaker.svc.cluster.local
+        port:
+          number: 8000

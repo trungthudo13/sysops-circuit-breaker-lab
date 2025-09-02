@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: circuit-breaker
+  labels:
+    istio-injection: "enabled"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontier
+  namespace: circuit-breaker
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: frontier }
+  template:
+    metadata:
+      labels: { app: frontier }
+    spec:
+      containers:
+      - name: app
+        image: circuit-breaker:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+        env:
+        - name: EXT_INSTALLED_APPS
+          value: apps.frontier
+        - name: BACKLINE_DOMAIN
+          value: http://backline.circuit-breaker.svc.cluster.local:8000
+        - name: MIDLINE_DOMAIN
+          value: http://backline.circuit-breaker.svc.cluster.local:8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontier
+  namespace: circuit-breaker
+spec:
+  selector: { app: frontier }
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: midline
+  namespace: circuit-breaker
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: midline }
+  template:
+    metadata:
+      labels: { app: midline }
+    spec:
+      containers:
+      - name: app
+        image: circuit-breaker:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+        env:
+        - name: EXT_INSTALLED_APPS
+          value: apps.midline
+        - name: FRONTIER_DOMAIN
+          value: http://frontier.circuit-breaker.svc.cluster.local:8000
+        - name: BACKLINE_DOMAIN
+          value: http://backline.circuit-breaker.svc.cluster.local:8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: midline
+  namespace: circuit-breaker
+spec:
+  selector: { app: midline }
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backline
+  namespace: circuit-breaker
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: backline }
+  template:
+    metadata:
+      labels: { app: backline }
+    spec:
+      containers:
+      - name: app
+        image: circuit-breaker:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+        env:
+        - name: EXT_INSTALLED_APPS
+          value: apps.backline
+        - name: FRONTIER_DOMAIN
+          value: http://frontier.circuit-breaker.svc.cluster.local:8000
+        - name: MIDLINE_DOMAIN
+          value: http://midline.circuit-breaker.svc.cluster.local:8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backline
+  namespace: circuit-breaker
+spec:
+  selector: { app: backline }
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000

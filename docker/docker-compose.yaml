@@ -1,0 +1,36 @@
+services:
+
+  frontier:
+    image: circuit-breaker:latest
+    restart: no
+    environment:
+      - EXT_INSTALLED_APPS=apps.frontier
+      # - MIDLINE_DOMAIN=http://midline:8000
+      - BACKLINE_DOMAIN=http://backline:8000
+      - MIDLINE_DOMAIN=http://backline:8000
+
+  midline:
+    image: circuit-breaker:latest
+    restart: no
+    environment:
+      - EXT_INSTALLED_APPS=apps.midline
+      - FRONTIER_DOMAIN=http://frontier:8000
+      - BACKLINE_DOMAIN=http://backline:8000
+      
+  backline:
+    image: circuit-breaker:latest
+    restart: no
+    environment:
+      - EXT_INSTALLED_APPS=apps.backline
+      - FRONTIER_DOMAIN=http://frontier:8000
+      - MIDLINE_DOMAIN=http://midline:8000
+
+  nginx:
+    image: nginx:stable-alpine3.21-perl
+    restart: no
+    ports:
+      - "8001:80"
+    volumes:
+      - ../configs/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontier
