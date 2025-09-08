@@ -1,4 +1,3 @@
-# DestinationRule: giới hạn connection pool + bật outlier detection
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
@@ -14,10 +13,32 @@ spec:
         http1MaxPendingRequests: 100
         maxRequestsPerConnection: 100
     outlierDetection:
-      consecutive5xxErrors: 5          
-      interval: 5s              
-      baseEjectionTime: 30s     
-      maxEjectionPercent: 50    
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: backline-mustfail-dr
+  namespace: circuit-breaker
+spec:
+  host: backline-mustfail.circuit-breaker.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 50
+      http:
+        http1MaxPendingRequests: 100
+        maxRequestsPerConnection: 100
+    outlierDetection:                 # CB hung hãn cho path xấu
+      consecutive5xxErrors: 2
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 2
+      interval: 2s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 100
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -28,13 +49,30 @@ spec:
   hosts:
   - backline.circuit-breaker.svc.cluster.local
   http:
-  - route:
+  - match:
+    - uri:
+        # prefix: /
+        prefix: /api/mustfail-request
+    route:
     - destination:
-        host: backline.circuit-breaker.svc.cluster.local
-        port:
-          number: 8000
-      weight: 100
+        host: backline-mustfail.circuit-breaker.svc.cluster.local
+        port: { number: 80 }
     timeout: 2s
     retries:
       attempts: 2
       perTryTimeout: 1s
+      retryOn: 5xx,reset,connect-failure,refused-stream,retriable-status-codes
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: backline.circuit-breaker.svc.cluster.local
+        port:
+          number: 8000
+    timeout: 2s
+    retries:
+      attempts: 2
+      perTryTimeout: 1s
+      retryOn: 5xx,reset,connect-failure,refused-stream,retriable-status-codes
+      # retriableStatusCodes: [500]

@@ -1,3 +1,4 @@
+from functools import cache
 import logging
 from aiobreaker.listener import CircuitBreakerListener
 
@@ -13,6 +14,8 @@ class DBListener(CircuitBreakerListener):
 
     def failure(self, cb, exc):
         "Called when a function invocation raises a system error."
+        # cache.get("")
+        # return exc
 
     def success(self, cb):
         "Called when a function invocation succeeds."

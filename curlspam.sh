@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-URL="http://localhost:8001/api/timeout-request?non_circuit_breaker=true"
-# URL="http://localhost:8002/api/timeout-request?non_circuit_breaker=true"
+# URL="http://localhost:8001/api/timeout-request?non_circuit_breaker=true"
+URL="http://localhost:8002/api/mustfail-request?non_circuit_breaker=true"
+# URL="http://localhost:8002/api/success-request?non_circuit_breaker=true"
 # URL="http://localhost:8001/api/timeout-request"
 
 # seq 1 1000 | xargs -n1 -P20 -I{} \

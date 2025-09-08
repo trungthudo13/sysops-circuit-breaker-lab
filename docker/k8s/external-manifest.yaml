@@ -1,0 +1,123 @@
+# 1) Hai alias host cho cùng external đích
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: host.docker.internal-aliases
+  namespace: circuit-breaker
+spec:
+  hosts:
+  - host.docker.internal
+  - host.docker.internal-success.mesh
+  - host.docker.internal-mustfail.mesh
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+  - number: 8001
+    name: http
+    protocol: HTTP
+  # - number: 443
+  #   name: https
+  #   protocol: TLS
+  endpoints:
+  - address: host.docker.internal
+---
+# 2) DR cho alias "success" (CB nhẹ)
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dr-host.docker.internal-success
+  namespace: circuit-breaker
+spec:
+  host: host.docker.internal-success.mesh
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+      # mode: SIMPLE
+      # sni: host.docker.internal
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+---
+# 3) DR cho alias "mustfail" (CB hung hãn)
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dr-host.docker.internal-mustfail
+  namespace: circuit-breaker
+spec:
+  host: host.docker.internal-mustfail.mesh
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+      # mode: SIMPLE
+      # sni: host.docker.internal
+    outlierDetection:
+      splitExternalLocalOriginErrors: true
+      consecutive5xxErrors: 2
+      consecutiveLocalOriginFailures: 2
+      interval: 2s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 100
+---
+# 3) DR cho alias "mustfail" (CB hung hãn)
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dr-host.docker.internal
+  namespace: circuit-breaker
+spec:
+  host: host.docker.internal
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+      # mode: SIMPLE
+      # sni: host.docker.internal
+    outlierDetection:
+      splitExternalLocalOriginErrors: true
+      consecutive5xxErrors: 2
+      consecutiveLocalOriginFailures: 2
+      interval: 2s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: vs-host.docker.internal-path
+  namespace: circuit-breaker
+spec:
+  hosts:
+  - host.docker.internal
+  http:
+  - match:
+    - uri: { prefix: /api/mustfail-request }
+    headers:
+      request:
+        set:
+          host: host.docker.internal    # giữ Host header đúng
+    route:
+    - destination:
+        host: host.docker.internal-mustfail.mesh
+        port: { number: 8001 }  # external HTTP on 8001
+    timeout: 2s
+    retries:
+      attempts: 2
+      perTryTimeout: 1s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+  - match:
+    - uri: { prefix: /api/success-request }
+    headers:
+      request:
+        set:
+          host: host.docker.internal
+    route:
+    - destination:
+        host: host.docker.internal-success.mesh
+        port: { number: 8001 }
+    timeout: 2s
+    retries:
+      attempts: 2
+      perTryTimeout: 1s
+      retryOn: 5xx,reset,connect-failure,refused-stream

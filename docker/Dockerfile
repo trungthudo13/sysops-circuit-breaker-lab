@@ -47,6 +47,6 @@ RUN chmod +x /entrypoint.sh
 
 # Healthcheck
 # HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-#   CMD curl -fsS http://127.0.0.1:${PORT}/healthz || exit 1
+#   CMD curl -fsS http://127.0.0.1:8000/healthz || exit 1
   
 ENTRYPOINT ["/entrypoint.sh"]

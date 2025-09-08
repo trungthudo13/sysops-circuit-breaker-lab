@@ -1,0 +1,40 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: se-google
+  namespace: circuit-breaker   # đổi theo namespace của bạn
+spec:
+  hosts:
+  - google.com
+  - www.google.com
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  - number: 443
+    name: https
+    protocol: TLS
+  # có thể bỏ endpoints để DNS tự resolve; hoặc giữ:
+  endpoints:
+  - address: google.com
+---
+# 2) DR cho alias "success" (CB nhẹ)
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dr-google.com
+  namespace: circuit-breaker
+spec:
+  host: google.com
+  trafficPolicy:
+    tls:
+      # mode: DISABLE
+      mode: SIMPLE
+      sni: google.com
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
