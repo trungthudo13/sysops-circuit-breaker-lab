@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+labels:
+  - includeSelectors: true
+    pairs:
+      namespace: thudt32
+resources:
+  - 00-ns-thudt32.yaml 
+  - 10-thudt32-backline-cm.yaml 
+  - 10-thudt32-frontier-cm.yaml 
+  - 20-thudt32-backline-secret.yaml 
+  - 20-thudt32-frontier-secret.yaml 
+  - 30-thudt32-backline-api-deploy.yaml 
+  - 30-thudt32-frontier-api-deploy.yaml 
+  - 40-thudt32-backline-svc .yaml 
+  - 40-thudt32-frontier-svc.yaml 
+  - 50-thudt32-frontier-ing.yaml 
+  - 55-thudt32-backline-destrule.yaml 
+  - 56-thudt32-backline-virtualservice.yaml 
+  - 70-thudt32-cilium-egress-policy.yaml 

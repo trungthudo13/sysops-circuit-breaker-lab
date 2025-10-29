@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: thudt32-google-egress
+  namespace: thudt32
+spec:
+  selectors:
+    - podSelector:
+        matchLabels:
+          app: thudt32-frontier
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: thudt32
+  destinationCIDRs: 
+    - "0.0.0.0/0"                  
+  egressGateway:
+    nodeSelector:
+      matchLabels:
+        kubernetes.io/hostname: kind-worker 

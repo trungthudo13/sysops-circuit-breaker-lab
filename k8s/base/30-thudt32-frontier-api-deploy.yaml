@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thudt32-frontier
+  namespace: thudt32
+  labels:
+    app: thudt32-frontier
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: thudt32-frontier }
+  template:
+    metadata:
+      labels: { app: thudt32-frontier }
+    spec:
+      containers:
+      - name: thudt32-frontier
+        image: circuit-breaker:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8000
+        envFrom:
+          - configMapRef: { name: thudt32-frontier-config }
+          - secretRef:    { name: thudt32-frontier-secret }
+        # readinessProbe:
+        #   httpGet: { path: /healthz, port: 8000 }
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 5
+        # livenessProbe:
+        #   httpGet: { path: /healthz, port: 8000 }
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        resources:
+          requests: { cpu: "250m", memory: "256Mi" }
+          limits:   { cpu: "500m", memory: "512Mi" }

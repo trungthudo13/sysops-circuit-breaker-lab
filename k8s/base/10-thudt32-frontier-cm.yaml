@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thudt32-frontier-config
+  namespace: thudt32
+data:
+  EXT_INSTALLED_APPS: "apps.frontier"
+  FRONTIER_DOMAIN: "http://frontier.circuit-breaker.svc.cluster.local:8000"
+  MIDLINE_DOMAIN: "http://backline.circuit-breaker.svc.cluster.local:8000"
+  # MIDLINE_DOMAIN: "http://midline.circuit-breaker.svc.cluster.local:8000"
+  BACKLINE_DOMAIN: "http://backline.circuit-breaker.svc.cluster.local:8000"
