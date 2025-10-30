@@ -3,18 +3,16 @@ kind: Ingress
 metadata:
   name: thudt32-frontier-ing
   namespace: thudt32
-  annotations:
-    spec.ingressClassName: nginx
 spec:
+  ingressClassName: nginx
   rules:
-    - host: localhost   # sửa host theo /etc/hosts nếu cần
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: thudt32-frontier-svc
-                port:
-                  number: 8000
-                  # number: 81
+  - host: localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thudt32-frontier-svc
+            port:
+              number: 8000
