@@ -30,6 +30,20 @@ cilium install \
 cilium status --wait
 ```
 
+### Enable network tracing
+
+```sh
+cilium hubble enable
+```
+
+```sh
+kubectl -n kube-system port-forward service/hubble-relay 4245:80
+```
+
+```sh
+hubble status -P
+```
+
 ## CREATE RESOURCE
 
 ```sh
@@ -51,6 +65,6 @@ docker build -t circuit-breaker:latest -f ./docker/Dockerfile .
 ## INSTALL NGINX INGRESS
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+kubectl apply -f k8s/controller/nginx-ingress.yaml -n ingress-nginx  
 kubectl -n ingress-nginx rollout status deploy/ingress-nginx-controller
 ```

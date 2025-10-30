@@ -9,3 +9,4 @@ data:
   MIDLINE_DOMAIN: "http://backline.circuit-breaker.svc.cluster.local:8000"
   # MIDLINE_DOMAIN: "http://midline.circuit-breaker.svc.cluster.local:8000"
   BACKLINE_DOMAIN: "http://backline.circuit-breaker.svc.cluster.local:8000"
+  ALLOWED_HOSTS: "127.0.0.1,localhost,host.docker.internal,midline,backline.circuit-breaker.svc.cluster.local"
